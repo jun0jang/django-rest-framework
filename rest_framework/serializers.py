@@ -192,7 +192,7 @@ class BaseSerializer(Field):
             "For example: 'serializer.save(owner=request.user)'.'"
         )
 
-        assert not hasattr(self, '_data'), (
+        assert 'data' not in self.__dict__, (
             "You cannot call `.save()` after accessing `serializer.data`."
             "If you need to access data before committing to the database then "
             "inspect 'serializer.validated_data' instead. "
