@@ -168,10 +168,10 @@ class BaseSerializer(Field):
 
     def save(self, **kwargs):
         assert not hasattr(self, 'save_object'), (
-            'Serializer `%s.%s` has old-style version 2 `.save_object()` '
-            'that is no longer compatible with REST framework 3. '
-            'Use the new-style `.create()` and `.update()` methods instead.' %
-            (self.__class__.__module__, self.__class__.__name__)
+                'Serializer `%s.%s` has old-style version 2 `.save_object()` '
+                'that is no longer compatible with REST framework 3. '
+                'Use the new-style `.create()` and `.update()` methods instead.' %
+                (self.__class__.__module__, self.__class__.__name__)
         )
 
         assert hasattr(self, '_errors'), (
@@ -218,10 +218,10 @@ class BaseSerializer(Field):
 
     def is_valid(self, raise_exception=False):
         assert not hasattr(self, 'restore_object'), (
-            'Serializer `%s.%s` has old-style version 2 `.restore_object()` '
-            'that is no longer compatible with REST framework 3. '
-            'Use the new-style `.create()` and `.update()` methods instead.' %
-            (self.__class__.__module__, self.__class__.__name__)
+                'Serializer `%s.%s` has old-style version 2 `.restore_object()` '
+                'that is no longer compatible with REST framework 3. '
+                'Use the new-style `.create()` and `.update()` methods instead.' %
+                (self.__class__.__module__, self.__class__.__name__)
         )
 
         assert hasattr(self, 'initial_data'), (
@@ -243,7 +243,7 @@ class BaseSerializer(Field):
 
         return not bool(self._errors)
 
-    @property
+    @cached_property
     def data(self):
         if hasattr(self, 'initial_data') and not hasattr(self, '_validated_data'):
             msg = (
@@ -255,14 +255,13 @@ class BaseSerializer(Field):
             )
             raise AssertionError(msg)
 
-        if not hasattr(self, '_data'):
-            if self.instance is not None and not getattr(self, '_errors', None):
-                self._data = self.to_representation(self.instance)
-            elif hasattr(self, '_validated_data') and not getattr(self, '_errors', None):
-                self._data = self.to_representation(self.validated_data)
-            else:
-                self._data = self.get_initial()
-        return self._data
+        if self.instance is not None and not getattr(self, '_errors', None):
+            data = self.to_representation(self.instance)
+        elif hasattr(self, '_validated_data') and not getattr(self, '_errors', None):
+            data = self.to_representation(self.validated_data)
+        else:
+            data = self.get_initial()
+        return data
 
     @property
     def errors(self):
@@ -304,10 +303,10 @@ class SerializerMetaclass(type):
         for base in reversed(bases):
             if hasattr(base, '_declared_fields'):
                 fields = [
-                    (field_name, obj) for field_name, obj
-                    in base._declared_fields.items()
-                    if field_name not in attrs
-                ] + fields
+                             (field_name, obj) for field_name, obj
+                             in base._declared_fields.items()
+                             if field_name not in attrs
+                         ] + fields
 
         return OrderedDict(fields)
 
@@ -400,7 +399,7 @@ class Serializer(BaseSerializer, metaclass=SerializerMetaclass):
                 (field_name, field.get_value(self.initial_data))
                 for field_name, field in self.fields.items()
                 if (field.get_value(self.initial_data) is not empty) and
-                not field.read_only
+                   not field.read_only
             ])
 
         return OrderedDict([
@@ -945,20 +944,20 @@ class ModelSerializer(Serializer):
         except TypeError:
             tb = traceback.format_exc()
             msg = (
-                'Got a `TypeError` when calling `%s.%s.create()`. '
-                'This may be because you have a writable field on the '
-                'serializer class that is not a valid argument to '
-                '`%s.%s.create()`. You may need to make the field '
-                'read-only, or override the %s.create() method to handle '
-                'this correctly.\nOriginal exception was:\n %s' %
-                (
-                    ModelClass.__name__,
-                    ModelClass._default_manager.name,
-                    ModelClass.__name__,
-                    ModelClass._default_manager.name,
-                    self.__class__.__name__,
-                    tb
-                )
+                    'Got a `TypeError` when calling `%s.%s.create()`. '
+                    'This may be because you have a writable field on the '
+                    'serializer class that is not a valid argument to '
+                    '`%s.%s.create()`. You may need to make the field '
+                    'read-only, or override the %s.create() method to handle '
+                    'this correctly.\nOriginal exception was:\n %s' %
+                    (
+                        ModelClass.__name__,
+                        ModelClass._default_manager.name,
+                        ModelClass.__name__,
+                        ModelClass._default_manager.name,
+                        self.__class__.__name__,
+                        tb
+                    )
             )
             raise TypeError(msg)
 
@@ -1148,7 +1147,7 @@ class ModelSerializer(Serializer):
                     "it in the {serializer_class} 'exclude' option. Remove the "
                     "field or, if inherited from a parent serializer, disable "
                     "with `{field_name} = None`."
-                    .format(
+                        .format(
                         field_name=field_name,
                         serializer_class=self.__class__.__name__
                     )
@@ -1172,10 +1171,10 @@ class ModelSerializer(Serializer):
         `Meta.fields` option is not specified.
         """
         return (
-            [model_info.pk.name] +
-            list(declared_fields) +
-            list(model_info.fields) +
-            list(model_info.forward_relations)
+                [model_info.pk.name] +
+                list(declared_fields) +
+                list(model_info.fields) +
+                list(model_info.forward_relations)
         )
 
     # Methods for constructing serializer fields...
@@ -1269,7 +1268,8 @@ class ModelSerializer(Serializer):
         field_kwargs = get_relation_kwargs(field_name, relation_info)
 
         to_field = field_kwargs.pop('to_field', None)
-        if to_field and not relation_info.reverse and not relation_info.related_model._meta.get_field(to_field).primary_key:
+        if to_field and not relation_info.reverse and not relation_info.related_model._meta.get_field(
+                to_field).primary_key:
             field_kwargs['slug_field'] = to_field
             field_class = self.serializer_related_to_field
 
@@ -1283,6 +1283,7 @@ class ModelSerializer(Serializer):
         """
         Create nested fields for forward and reverse relationships.
         """
+
         class NestedSerializer(ModelSerializer):
             class Meta:
                 model = relation_info.related_model
@@ -1369,9 +1370,9 @@ class ModelSerializer(Serializer):
             # Guard against the possible misspelling `readonly_fields` (used
             # by the Django admin and others).
             assert not hasattr(self.Meta, 'readonly_fields'), (
-                'Serializer `%s.%s` has field `readonly_fields`; '
-                'the correct spelling for the option is `read_only_fields`.' %
-                (self.__class__.__module__, self.__class__.__name__)
+                    'Serializer `%s.%s` has field `readonly_fields`; '
+                    'the correct spelling for the option is `read_only_fields`.' %
+                    (self.__class__.__module__, self.__class__.__name__)
             )
 
         return extra_kwargs
@@ -1498,8 +1499,8 @@ class ModelSerializer(Serializer):
 
         # Otherwise use the default set of validators.
         return (
-            self.get_unique_together_validators() +
-            self.get_unique_for_date_validators()
+                self.get_unique_together_validators() +
+                self.get_unique_for_date_validators()
         )
 
     def get_unique_together_validators(self):
@@ -1507,8 +1508,8 @@ class ModelSerializer(Serializer):
         Determine a default set of validators for any unique_together constraints.
         """
         model_class_inheritance_tree = (
-            [self.Meta.model] +
-            list(self.Meta.model._meta.parents)
+                [self.Meta.model] +
+                list(self.Meta.model._meta.parents)
         )
 
         # The field names we're passing though here only include fields
@@ -1610,16 +1611,17 @@ class HyperlinkedModelSerializer(ModelSerializer):
         `Meta.fields` option is not specified.
         """
         return (
-            [self.url_field_name] +
-            list(declared_fields) +
-            list(model_info.fields) +
-            list(model_info.forward_relations)
+                [self.url_field_name] +
+                list(declared_fields) +
+                list(model_info.fields) +
+                list(model_info.forward_relations)
         )
 
     def build_nested_field(self, field_name, relation_info, nested_depth):
         """
         Create nested fields for forward and reverse relationships.
         """
+
         class NestedSerializer(HyperlinkedModelSerializer):
             class Meta:
                 model = relation_info.related_model
